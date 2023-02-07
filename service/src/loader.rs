@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Context};
 use cargo::core::compiler::{CompileMode, MessageFormat};
 use cargo::core::{Manifest, PackageId, Shell, Summary, Verbosity, Workspace};
-use cargo::ops::{clean, compile, CleanOptions, CompileOptions};
+use cargo::ops::{clean, compile, CleanOptions, CompileOptions, CompileFilter, LibRule, FilterRule};
 use cargo::util::interning::InternedString;
 use cargo::util::{homedir, ToSemver};
 use cargo::Config;
@@ -141,7 +141,14 @@ pub async fn build_crate(
     check_version(summary)?;
     check_no_panic(&ws)?;
 
-    let opts = get_compile_options(&config, release_mode)?;
+    let mut opts = get_compile_options(&config, release_mode)?;
+    opts.filter = CompileFilter::new(
+        LibRule::True,
+        FilterRule::none(),
+        FilterRule::All,
+        FilterRule::All,
+        FilterRule::All,
+    );
     let compilation = compile(&ws, &opts);
 
     Ok(compilation?.cdylibs[0].path.clone())
